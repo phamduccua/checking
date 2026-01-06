@@ -1,0 +1,23 @@
+server:
+  port: 9090
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/checking?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 16042005
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    open-in-view: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format-sql: true
+jwt:
+  expiration: 2592000
+  secretKey: jVUluL1wrLZtYEz7CBS2USkpy5Vr7X8NOYyQgzoVZp0=

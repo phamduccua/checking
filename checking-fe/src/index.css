@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* Reset + light theme */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Link */
+a {
+  font-weight: 500;
+  color: #2563eb; /* blue-600 */
+  text-decoration: inherit;
+}
+a:hover {
+  color: #1d4ed8; /* blue-700 */
+}
+
+/* Button base (không ghi đè Tailwind) */
+button {
+  font-family: inherit;
+}
+.filter {
+  @apply
+    bg-gray-800
+    border
+    border-gray-600
+    rounded
+    px-3
+    py-1
+    text-sm
+    outline-none
+    text-gray-100
+    placeholder-gray-400
+    focus:border-blue-500
+    focus:ring-1
+    focus:ring-blue-500;
+}
