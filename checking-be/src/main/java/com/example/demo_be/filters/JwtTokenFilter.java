@@ -76,7 +76,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private boolean isPassToken(@NonNull HttpServletRequest request) {
         final List<Pair<String, String>> byPassToken = Arrays.asList(
                 Pair.of("/api/login", "POST"),
-                Pair.of("/admin/login", "POST")
+                Pair.of("/admin/login", "POST"),
+                Pair.of("/api/app-tokens/check-active", "GET")
         );
         String path = request.getServletPath();
         String method = request.getMethod();
