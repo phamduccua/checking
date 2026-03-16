@@ -251,7 +251,9 @@ export default function LogsPage() {
                     className={`border-t border-gray-700 ${getRowClass(log)}`}
                   >
                     <td className="px-3 py-2 text-gray-400">
-                      {new Date(log.logTime).toLocaleString("vi-VN")}
+                      {new Date(log.time + "Z").toLocaleString("vi-VN", {
+                        timeZone: "Asia/Ho_Chi_Minh"
+                      })}
                     </td>
 
                     <td className="px-3 py-2 text-center">

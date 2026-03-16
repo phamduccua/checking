@@ -7,14 +7,14 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: checking
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: 123@4567
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "checking_mysql", "-uroot", "-p123@4567"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -27,19 +27,21 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://checking_mysql:3306/checking?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATASOURCE_PASSWORD: 123@4567
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Ho_Chi_Minh
     
     depends_on:
       mysql:
         condition: service_healthy
+    restart: unless-stopped
     
   frontend:
     build: ./checking-fe
     container_name: checking_frontend
     ports:
-      - "5001:5001"
+      - "5002:5002"
     depends_on:
       - backend
+    restart: unless-stopped
 volumes:
   mysql_data:

@@ -9,7 +9,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import org.springframework.stereotype.Repository;
-
+import java.time.LocalDateTime;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -72,8 +72,7 @@ public class LogRepositoryImpl implements LogCustoms {
                     (String) r[1],
                     (String) r[2],
                     (String) r[3],
-                    ((Timestamp) r[4]).toInstant()
-                            .atOffset(ZoneOffset.of("+07:00"))
+                    ((java.sql.Timestamp) r[4]).toLocalDateTime()
             ));
         }
 
@@ -147,7 +146,7 @@ public class LogRepositoryImpl implements LogCustoms {
                 (String) r[1],
                 (String) r[2],
                 (String) r[3],
-                ((java.sql.Timestamp) r[4]).toInstant().atOffset(OffsetDateTime.now().getOffset()),
+                ((Timestamp) r[4]).toLocalDateTime(), 
                 (String) r[5],
                 (String) r[6],
                 (String) r[7]

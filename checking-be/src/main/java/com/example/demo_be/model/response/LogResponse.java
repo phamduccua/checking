@@ -5,8 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
-import java.time.OffsetDateTime;
 @Getter
 @Setter
 @AllArgsConstructor
@@ -16,8 +16,7 @@ public class LogResponse {
     private String username;
     private String appName;
     private String title;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-    private OffsetDateTime logTime;
+    private LocalDateTime time;
     private String subject;
     private String flag;
     private String fullname;

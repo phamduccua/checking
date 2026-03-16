@@ -35,7 +35,7 @@ public class LogServiceImpl implements LogService {
             log.setSubject(logDTO.getSubject());
             log.setTitle(logDTO.getTitle());
             log.setFlag("NORMAL");
-            if(!logDTO.getName().equals("Electron")){
+            if(!logDTO.getName().equals("AI-CHECKING")){
                 log.setFlag("REVIEW");
             }
             else {

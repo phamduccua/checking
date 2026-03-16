@@ -146,7 +146,9 @@ export default function Dashboard() {
                   <span className="text-yellow-400 ml-1">{log.title}</span>
                 </span>
                 <span className="text-gray-400 text-xs">
-                  {new Date(log.time).toLocaleString("vi-VN")}
+                  {new Date(log.time + "Z").toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh"
+                  })}
                 </span>
               </li>
             ))}
