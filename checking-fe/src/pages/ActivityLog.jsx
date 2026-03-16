@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
+import {
+  Table,
+  Button,
+  Input,
+  Select,
+  Tag,
+  Space,
+  Popconfirm,
+  Typography,
+} from "antd";
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { getLogs, deleteLogsBySubject } from "../service/log";
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
-/**
- * Trình duyệt
- */
+// Trình duyệt
 const riskyBrowsers = [
   /chrome/i,
   /coccoc/i,
@@ -13,9 +25,7 @@ const riskyBrowsers = [
   /brave/i,
 ];
 
-/**
- * App nhắn tin / MXH
- */
+// App nhắn tin / MXH
 const riskyMessengers = [
   /zalo/i,
   /messenger/i,
@@ -35,17 +45,20 @@ const riskyMessengers = [
 const riskyApps = [...riskyBrowsers, ...riskyMessengers];
 
 const SUBJECT_LABELS = {
-  py: "Python",
+  code: "Lập trình",
   trr: "Toán rời rạc",
+  sql: "Cơ sở dữ liệu",
   "ai-challenge": "AI Challenge",
 };
+
+const { Text } = Typography;
 
 export default function LogsPage() {
   const [filters, setFilters] = useState({
     username: "",
     app: "",
     title: "",
-    subject: "py",
+    subject: localStorage.getItem("selectedSubject") || "code",
     flag: "",
   });
 
@@ -53,9 +66,8 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(false);
 
   const limit = 30;
-  const [offset, setOffset] = useState(0);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [page, setPage] = useState(0); // internally using page to calculate offset
+  const offset = page * limit;
 
   const fetchLogs = async () => {
     try {
@@ -79,7 +91,8 @@ export default function LogsPage() {
 
   useEffect(() => {
     fetchLogs();
-  }, [offset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]); // fetch on page change
 
   const handleChange = (e) => {
     setFilters({
@@ -89,244 +102,205 @@ export default function LogsPage() {
   };
 
   const handleSearch = () => {
-    setOffset(0);
-    fetchLogs();
+    if (page !== 0) {
+      setPage(0);
+    } else {
+      fetchLogs();
+    }
   };
 
   const handleRefresh = () => {
-    setOffset(0);
-    fetchLogs();
+    if (page !== 0) {
+      setPage(0);
+    } else {
+      fetchLogs();
+    }
   };
 
   const handleConfirmDelete = async () => {
     try {
       setLoading(true);
       await deleteLogsBySubject(filters.subject);
-      setShowDeleteModal(false);
-      setOffset(0);
-      fetchLogs();
+      if (page !== 0) {
+        setPage(0);
+      } else {
+        fetchLogs();
+      }
     } catch (err) {
       console.error("Delete logs failed:", err);
-      alert("Xóa logs thất bại");
     } finally {
       setLoading(false);
     }
   };
 
-  /* Pagination */
-  const handlePrevPage = () => {
-    if (offset === 0) return;
-    setOffset((prev) => Math.max(prev - limit, 0));
-  };
-
-  const handleNextPage = () => {
-    if (logs.length < limit) return;
-    setOffset((prev) => prev + limit);
-  };
-
-  /**
-   * Ưu tiên App rủi ro > Flag
-   */
-  const getRowClass = (log) => {
-    const isRiskyApp = riskyApps.some(
-      (pattern) =>
-        pattern.test(log.appName || "") ||
-        pattern.test(log.title || "")
-    );
-
-    if (isRiskyApp) {
-      return "bg-red-500/10 hover:bg-red-500/20";
-    }
-
-    const isFlagged = log.flag && log.flag !== "NORMAL";
-    if (isFlagged) {
-      return "bg-yellow-500/20 hover:bg-yellow-500/30";
-    }
-
-    return "hover:bg-gray-800";
-  };
+  const columns = [
+    {
+      title: "Time",
+      dataIndex: "time",
+      key: "time",
+      render: (time) => (
+        <Text type="secondary">
+          {new Date(time + "Z").toLocaleString("vi-VN", {
+            timeZone: "Asia/Ho_Chi_Minh",
+          })}
+        </Text>
+      ),
+    },
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+      align: "center",
+      render: (text) => <Text strong style={{ whiteSpace: "nowrap" }}>{text}</Text>,
+    },
+    {
+      title: "Fullname",
+      dataIndex: "fullname",
+      key: "fullname",
+      align: "center",
+    },
+    {
+      title: "App",
+      dataIndex: "appName",
+      key: "appName",
+      align: "center",
+      render: (appName, record) => {
+        const isRiskyApp = riskyApps.some(
+          (pattern) =>
+            pattern.test(appName || "") || pattern.test(record.title || "")
+        );
+        return (
+          <Space>
+            {appName}
+            {isRiskyApp && <Tag color="volcano">Rủi ro</Tag>}
+          </Space>
+        );
+      },
+    },
+    {
+      title: "Window Title",
+      dataIndex: "title",
+      key: "title",
+    },
+    {
+      title: "Subject",
+      dataIndex: "subject",
+      key: "subject",
+      align: "center",
+      render: (subject) => (
+        <Tag color="cyan">{SUBJECT_LABELS[subject] || subject}</Tag>
+      ),
+    },
+    {
+      title: "Flag",
+      dataIndex: "flag",
+      key: "flag",
+      align: "center",
+      render: (flag) =>
+        flag && flag !== "NORMAL" ? (
+          <Tag color="gold">{flag}</Tag>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+  ];
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* Filters + Actions */}
-      <div className="flex justify-between items-center flex-wrap gap-2">
-        <div className="flex flex-wrap gap-2">
-          <input
+      <Space style={{ marginBottom: 16, flexWrap: "wrap", justifyContent: "space-between", width: "100%" }} size="middle">
+        <Space wrap>
+          <Input
             name="username"
             value={filters.username}
             onChange={handleChange}
-            className="filter"
             placeholder="Username"
+            style={{ width: 130 }}
           />
 
-          <input
+          <Input
             name="app"
             value={filters.app}
             onChange={handleChange}
-            className="filter"
             placeholder="App name"
+            style={{ width: 130 }}
           />
 
-          <input
+          <Input
             name="title"
             value={filters.title}
             onChange={handleChange}
-            className="filter"
             placeholder="Keyword title"
+            style={{ width: 160 }}
           />
 
-          <select
-            name="subject"
+          <Select
             value={filters.subject}
-            onChange={handleChange}
-            className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm"
-          >
-            <option value="py">Python</option>
-            <option value="trr">Toán rời rạc</option>
-            <option value="ai-challenge">AI Challenge</option>
-          </select>
+            onChange={(val) => {
+              setFilters({ ...filters, subject: val });
+              localStorage.setItem("selectedSubject", val);
+            }}
+            style={{ width: 140 }}
+            options={[
+              { value: "code", label: "Lập trình" },
+              { value: "trr", label: "Toán rời rạc" },
+              {value: "sql", label: "Cơ sở dữ liệu" },
+              { value: "ai-challenge", label: "AI Challenge" },
+            ]}
+          />
 
-          <select
-            name="flag"
+          <Select
             value={filters.flag}
-            onChange={handleChange}
-            className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm"
-          >
-            <option value="">Tất cả Flag</option>
-            <option value="NORMAL">NORMAL</option>
-            <option value="REVIEW">REVIEW</option>
-          </select>
+            onChange={(val) => setFilters({ ...filters, flag: val })}
+            style={{ width: 130 }}
+            options={[
+              { value: "", label: "Tất cả Flag" },
+              { value: "NORMAL", label: "NORMAL" },
+              { value: "REVIEW", label: "REVIEW" },
+            ]}
+          />
 
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm"
-          >
+          <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
             Search
-          </button>
+          </Button>
 
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm disabled:opacity-50"
-          >
+          <Button icon={<ReloadOutlined />} onClick={handleRefresh} disabled={loading}>
             Làm mới
-          </button>
-        </div>
+          </Button>
+        </Space>
 
-        <button
-          onClick={() => setShowDeleteModal(true)}
-          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-black font-semibold rounded text-sm"
+        <Popconfirm
+          title="Xóa logs"
+          description={`Bạn có chắc chắn muốn xóa toàn bộ logs của môn ${
+            SUBJECT_LABELS[filters.subject] || filters.subject
+          }?`}
+          onConfirm={handleConfirmDelete}
+          okText="Xóa"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true }}
         >
-          Xóa logs môn hiện tại
-        </button>
-      </div>
+          <Button danger icon={<DeleteOutlined />}>
+            Xóa logs môn hiện tại
+          </Button>
+        </Popconfirm>
+      </Space>
 
       {/* Table */}
-      <div className="overflow-auto border border-gray-700 rounded">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-800 text-gray-400">
-            <tr>
-              <th className="px-3 py-2 text-left">Time</th>
-              <th className="px-3 py-2 text-center">Username</th>
-              <th className="px-3 py-2 text-center">Fullname</th>
-              <th className="px-3 py-2 text-center">App</th>
-              <th className="px-3 py-2 text-left">Window Title</th>
-              <th className="px-3 py-2 text-center">Subject</th>
-              <th className="px-3 py-2 text-center">Flag</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {!loading &&
-              logs.map((log) => {
-                const isRiskyApp = riskyApps.some(
-                  (pattern) =>
-                    pattern.test(log.appName || "") ||
-                    pattern.test(log.title || "")
-                );
-
-                return (
-                  <tr
-                    key={log.id}
-                    className={`border-t border-gray-700 ${getRowClass(log)}`}
-                  >
-                    <td className="px-3 py-2 text-gray-400">
-                      {new Date(log.time + "Z").toLocaleString("vi-VN", {
-                        timeZone: "Asia/Ho_Chi_Minh"
-                      })}
-                    </td>
-
-                    <td className="px-3 py-2 text-center">
-                      {log.username}
-                    </td>
-
-                    <td className="px-3 py-2 text-center">
-                      {log.fullname}
-                    </td>
-
-                    <td className="px-3 py-2 text-center">
-                      {log.appName}
-                      {isRiskyApp && (
-                        <span className="ml-1 text-red-400 text-xs font-semibold">
-                          (Rủi ro)
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-3 py-2">{log.title}</td>
-
-                    <td className="px-3 py-2 text-center">
-                      {SUBJECT_LABELS[log.subject] || log.subject}
-                    </td>
-
-                    <td className="px-3 py-2 text-center">
-                      {log.flag && log.flag !== "NORMAL" ? (
-                        <span className="text-yellow-400 text-xs font-semibold">
-                          {log.flag}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">-</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-between items-center text-sm text-gray-400">
-        <span>Trang {offset / limit + 1}</span>
-
-        <div className="flex gap-2">
-          <button
-            onClick={handlePrevPage}
-            disabled={offset === 0}
-            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-40"
-          >
-           ← Trước
-          </button>
-
-          <button
-            onClick={handleNextPage}
-            disabled={logs.length < limit}
-            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-40"
-          >
-            Sau →
-          </button>
-        </div>
-      </div>
-
-      {/* Confirm Delete Modal */}
-      {showDeleteModal && (
-        <ConfirmDeleteModal
-          title="Xóa logs"
-          description="Bạn có chắc chắn muốn xóa toàn bộ logs của môn hiện tại?"
-          onCancel={() => setShowDeleteModal(false)}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+      <Table
+        columns={columns}
+        dataSource={logs}
+        rowKey="id"
+        loading={loading}
+        bordered
+        rowClassName={(record) => (record.flag === "REVIEW" ? "flagged-row" : "")}
+        pagination={{
+          current: page + 1,
+          pageSize: limit,
+          showSizeChanger: false,
+          total: logs.length === limit ? (page + 2) * limit : (page + 1) * limit, // Pagination heuristic when no total available
+          onChange: (newPage) => setPage(newPage - 1),
+        }}
+      />
     </div>
   );
 }

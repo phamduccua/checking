@@ -3,6 +3,8 @@ import Layout from "./components/Layout"
 import Dashboard from "./pages/Dashboard"
 import Logs from "./pages/ActivityLog"
 import Users from "./pages/Users"
+import AppTokens from "./pages/AppTokens"
+import ReviewWebsites from "./pages/ReviewWebsites"
 import Login from "./pages/Login"
 // import Student from "./pages/Students"
 import ProtectedRoute from "./components/ProtectedRoute"
@@ -21,6 +23,8 @@ export default function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/logs" element={<Logs />} />
                 <Route path="/users" element={<Users />} />
+                <Route path="/app-tokens" element={<AppTokens />} />
+                <Route path="/review-webs" element={<ReviewWebsites />} />
                 {/* <Route path="/students" element={<Student />} /> */}
               </Routes>
             </Layout>
