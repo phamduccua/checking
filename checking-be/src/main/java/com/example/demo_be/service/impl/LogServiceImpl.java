@@ -17,6 +17,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -38,7 +40,7 @@ public class LogServiceImpl implements LogService {
             String title = normalizeValue(logDTO.getTitle());
 
             log.setAppName(appName);
-            log.setLogTime(logDTO.getTime());
+            log.setLogTime(OffsetDateTime.now(ZoneOffset.ofHours(7)));
             log.setSubject(logDTO.getSubject());
             log.setTitle(title);
             log.setFlag(resolveFlag(appName, title));
@@ -52,7 +54,8 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public StatsResponse getStats(String subject, java.time.OffsetDateTime startTime, java.time.OffsetDateTime endTime) {
+    public StatsResponse getStats(String subject, java.time.OffsetDateTime startTime,
+            java.time.OffsetDateTime endTime) {
         DashboardStatsDto result = logRepository.getStats(subject, startTime, endTime);
         StatsResponse statsResponse = new StatsResponse();
         statsResponse.setTotal_logs(result.getTotalLogs());
@@ -63,7 +66,8 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public List<FlaggedDTO> getFlagged(String subject, java.time.OffsetDateTime startTime, java.time.OffsetDateTime endTime, int limit, int offset) {
+    public List<FlaggedDTO> getFlagged(String subject, java.time.OffsetDateTime startTime,
+            java.time.OffsetDateTime endTime, int limit, int offset) {
         return logRepository.getFlagged(subject, startTime, endTime, limit, offset);
     }
 
@@ -84,9 +88,9 @@ public class LogServiceImpl implements LogService {
 
     /**
      * Quyết định flag cho log:
-     *   - APP_NAME match  → REVIEW
-     *   - TITLE_KEYWORD match → REVIEW
-     *   - Còn lại          → NORMAL
+     * - APP_NAME match → REVIEW
+     * - TITLE_KEYWORD match → REVIEW
+     * - Còn lại → NORMAL
      */
     private String resolveFlag(String appName, String title) {
         // Ưu tiên 1: khớp chính xác tên app/tiến trình
