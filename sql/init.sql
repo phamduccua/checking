@@ -50,8 +50,23 @@ LOCK TABLES `logs` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `review_websites`
+--
+
+DROP TABLE IF EXISTS `review_websites`;
+CREATE TABLE `review_websites` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `type` varchar(50) NOT NULL DEFAULT 'APP_NAME'
+    COMMENT 'APP_NAME: khớp chính xác tên tiến trình; TITLE_KEYWORD: flag nếu title chứa chuỗi này',
+  `web_name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_web_name_type` (`web_name`, `type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Table structure for table `users`
 --
+
 
 DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { Row, Col, Card, Statistic, Select, Button, Space, Typography, List, Tag, theme } from "antd";
+import { Row, Col, Card, Statistic, Select, Button, Space, Typography, List, Tag, theme, DatePicker } from "antd";
 import { ReloadOutlined, WarningOutlined } from "@ant-design/icons";
 import { getStats, getFlaggedLogs } from "../service/log";
+import dayjs from "dayjs";
 
 const { Text } = Typography;
+const { RangePicker } = DatePicker;
 
 export default function Dashboard() {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [subject, setSubject] = useState(() => localStorage.getItem("selectedSubject") || "code");
+  const [dateRange, setDateRange] = useState(null);
   const [totalFlagged, setTotalFlagged] = useState(0);
   const [flaggedLogs, setFlaggedLogs] = useState([]);
   const [page, setPage] = useState(0);
@@ -18,7 +21,10 @@ export default function Dashboard() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const res = await getStats(subject);
+      const startTime = dateRange && dateRange[0] ? dateRange[0].toISOString() : null;
+      const endTime = dateRange && dateRange[1] ? dateRange[1].toISOString() : null;
+
+      const res = await getStats(subject, startTime, endTime);
       setTotalFlagged(res.flagged_logs);
 
       setStats([
@@ -28,12 +34,17 @@ export default function Dashboard() {
           desc: "Tất cả hành vi ghi nhận",
         },
         {
+          label: "Số lượng user",
+          value: res.total_distinct_users,
+          desc: "User truy cập trong khoảng thời gian",
+        },
+        {
           label: "Log bị gắn cờ",
           value: res.flagged_logs,
           desc: "Có dấu hiệu nghi vấn",
         },
         {
-          label: "User cần xem xét",
+          label: "User cần xem",
           value: res.users_need_review,
           desc: "Có ≥ 1 nghi vấn",
         },
@@ -47,7 +58,9 @@ export default function Dashboard() {
 
   const fetchFlagged = async () => {
     try {
-      const res = await getFlaggedLogs(subject, limit, page * limit);
+      const startTime = dateRange && dateRange[0] ? dateRange[0].toISOString() : null;
+      const endTime = dateRange && dateRange[1] ? dateRange[1].toISOString() : null;
+      const res = await getFlaggedLogs(subject, limit, page * limit, startTime, endTime);
       setFlaggedLogs(res);
     } catch (err) {
       console.error("Failed to load flagged logs", err);
@@ -63,16 +76,16 @@ export default function Dashboard() {
   useEffect(() => {
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subject]);
+  }, [subject, dateRange]);
 
   useEffect(() => {
     fetchFlagged();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subject, page]);
+  }, [subject, page, dateRange]);
 
   useEffect(() => {
     setPage(0);
-  }, [subject]);
+  }, [subject, dateRange]);
 
   const paginationProps = {
     current: page + 1,
@@ -108,6 +121,13 @@ export default function Dashboard() {
             { value: "ai-challenge", label: "AI-Challenge" },
           ]}
         />
+        <RangePicker 
+          value={dateRange}
+          onChange={(dates) => setDateRange(dates)}
+          showTime
+          format="YYYY-MM-DD HH:mm:ss"
+          placeholder={["Từ ngày", "Đến ngày"]}
+        />
         <Button
           icon={<ReloadOutlined />}
           onClick={handleRefresh}
@@ -120,7 +140,7 @@ export default function Dashboard() {
       {/* STATS */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         {stats.map((s) => (
-          <Col xs={24} sm={12} md={8} key={s.label}>
+          <Col xs={24} sm={12} md={6} key={s.label}>
             <Card bordered={false} loading={loading}>
               <Statistic
                 title={s.label}

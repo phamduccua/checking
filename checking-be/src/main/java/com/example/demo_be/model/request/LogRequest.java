@@ -17,4 +17,8 @@ public class LogRequest {
     private String flag = "";
     private int limit = 30;
     private int offset = 0;
+    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+    private java.time.OffsetDateTime startTime;
+    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+    private java.time.OffsetDateTime endTime;
 }

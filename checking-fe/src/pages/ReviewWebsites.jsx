@@ -1,6 +1,26 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Space, Modal, Form, Input, Popconfirm, Typography, message, Card, theme } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, GlobalOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Button,
+  Space,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Popconfirm,
+  Typography,
+  message,
+  Card,
+  Tag,
+  theme,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+  GlobalOutlined,
+} from "@ant-design/icons";
 import {
   getReviewWebsites,
   createReviewWebsite,
@@ -9,6 +29,28 @@ import {
 } from "../service/reviewWeb";
 
 const { Text, Title } = Typography;
+
+const TYPE_OPTIONS = [
+  {
+    value: "APP_NAME",
+    label: "Tên App (khớp chính xác tiến trình)",
+    color: "blue",
+  },
+  {
+    value: "TITLE_KEYWORD",
+    label: "Từ khoá Title (title chứa chuỗi này)",
+    color: "orange",
+  },
+];
+
+const typeLabel = (type) => {
+  const opt = TYPE_OPTIONS.find((o) => o.value === type);
+  return opt ? (
+    <Tag color={opt.color}>{opt.value === "APP_NAME" ? "Tên App" : "Từ khoá Title"}</Tag>
+  ) : (
+    <Tag>{type}</Tag>
+  );
+};
 
 export default function ReviewWebsites() {
   const [websites, setWebsites] = useState([]);
@@ -26,7 +68,7 @@ export default function ReviewWebsites() {
       setWebsites(data || []);
     } catch (err) {
       console.error("Fetch Review Websites failed", err);
-      message.error("Lỗi khi tải danh sách Website");
+      message.error("Lỗi khi tải danh sách");
     } finally {
       setLoading(false);
     }
@@ -40,10 +82,12 @@ export default function ReviewWebsites() {
     setEditingItem(item);
     if (item) {
       form.setFieldsValue({
+        type: item.type || "APP_NAME",
         webName: item.webName,
       });
     } else {
       form.resetFields();
+      form.setFieldsValue({ type: "APP_NAME" });
     }
     setModalVisible(true);
   };
@@ -58,10 +102,13 @@ export default function ReviewWebsites() {
     try {
       setFormLoading(true);
       if (editingItem) {
-        await updateReviewWebsite(editingItem.id, { webName: values.webName.trim() });
+        await updateReviewWebsite(editingItem.id, {
+          type: values.type,
+          webName: values.webName.trim(),
+        });
         message.success("Cập nhật thành công!");
       } else {
-        // Hỗ trợ nhập nhiều web cách nhau bởi dấu phẩy, chấm phẩy hoặc xuống dòng
+        // Hỗ trợ nhập nhiều mục cách nhau bởi dấu phẩy, chấm phẩy hoặc xuống dòng
         const names = values.webName
           .split(/[,;\n]+/)
           .map((n) => n.trim())
@@ -69,15 +116,16 @@ export default function ReviewWebsites() {
 
         if (names.length === 0) return;
 
-        await createReviewWebsite({ webNames: names });
-        message.success(`Thêm mới thành công ${names.length} website!`);
+        await createReviewWebsite({ type: values.type, webNames: names });
+        message.success(`Thêm mới thành công ${names.length} mục!`);
       }
       handleCloseModal();
       fetchWebsites();
     } catch (err) {
-      console.error("Save Review Website error:", err);
-      // Hiển thị message từ BE (nếu có, ví dụ do trùng lặp webNames)
-      message.error(err.response?.data?.message || err.message || "Lưu dữ liệu thất bại");
+      console.error("Save error:", err);
+      message.error(
+        err.response?.data?.message || err.message || "Lưu dữ liệu thất bại"
+      );
     } finally {
       setFormLoading(false);
     }
@@ -87,7 +135,7 @@ export default function ReviewWebsites() {
     try {
       setLoading(true);
       await deleteReviewWebsite(id);
-      message.success("Đã xóa Website!");
+      message.success("Đã xóa thành công!");
       fetchWebsites();
     } catch (err) {
       console.error("Delete error:", err);
@@ -97,17 +145,31 @@ export default function ReviewWebsites() {
     }
   };
 
+  const typeFilter = [...new Set(websites.map((w) => w.type || "APP_NAME"))].map(
+    (t) => ({ text: t === "APP_NAME" ? "Tên App" : "Từ khoá Title", value: t })
+  );
+
   const columns = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      width: 80,
+      width: 70,
       align: "center",
       render: (id) => <Text type="secondary">{id}</Text>,
     },
     {
-      title: "Tên App / Website (Tên tiến trình)",
+      title: "Loại",
+      dataIndex: "type",
+      key: "type",
+      width: 160,
+      align: "center",
+      filters: typeFilter,
+      onFilter: (value, record) => (record.type || "APP_NAME") === value,
+      render: (type) => typeLabel(type || "APP_NAME"),
+    },
+    {
+      title: "Giá trị (Tên App / Từ khoá Title)",
       dataIndex: "webName",
       key: "webName",
       render: (text) => <Text strong>{text}</Text>,
@@ -116,7 +178,7 @@ export default function ReviewWebsites() {
       title: "Hành động",
       key: "action",
       align: "center",
-      width: 200,
+      width: 180,
       render: (_, record) => (
         <Space size="middle">
           <Button
@@ -128,8 +190,8 @@ export default function ReviewWebsites() {
             Sửa
           </Button>
           <Popconfirm
-            title="Xóa Website này?"
-            description={`Bạn có chắc muốn xóa "${record.webName}" khỏi danh sách cần xem xét?`}
+            title="Xóa mục này?"
+            description={`Bạn có chắc muốn xóa "${record.webName}"?`}
             onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
@@ -144,18 +206,34 @@ export default function ReviewWebsites() {
     },
   ];
 
+  const selectedType = Form.useWatch("type", form);
+
   return (
     <div className="space-y-4">
-      <Space style={{ marginBottom: 16, width: "100%", justifyContent: "space-between" }}>
+      <Space
+        style={{
+          marginBottom: 16,
+          width: "100%",
+          justifyContent: "space-between",
+        }}
+      >
         <Title level={4} style={{ margin: 0 }}>
           <GlobalOutlined style={{ marginRight: 8 }} />
           Danh sách App / Web cần xem xét
         </Title>
         <Space>
-          <Button icon={<ReloadOutlined />} onClick={fetchWebsites} disabled={loading}>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchWebsites}
+            disabled={loading}
+          >
             Làm mới
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => handleOpenModal()}
+          >
             Thêm mới
           </Button>
         </Space>
@@ -174,7 +252,7 @@ export default function ReviewWebsites() {
       </Card>
 
       <Modal
-        title={editingItem ? "Sửa Website" : "Thêm mới Website"}
+        title={editingItem ? "Sửa mục" : "Thêm mới"}
         open={modalVisible}
         onCancel={handleCloseModal}
         onOk={() => form.submit()}
@@ -187,21 +265,55 @@ export default function ReviewWebsites() {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{ webName: "" }}
+          initialValues={{ type: "APP_NAME" }}
           style={{ marginTop: 24 }}
         >
           <Form.Item
+            name="type"
+            label="Loại giới hạn"
+            rules={[{ required: true, message: "Vui lòng chọn loại!" }]}
+          >
+            <Select options={TYPE_OPTIONS} />
+          </Form.Item>
+
+          <Form.Item
             name="webName"
-            label={editingItem ? "Tên App / Website" : "Tên App / Website (ngăn cách bởi phẩy hoặc xuống dòng để thêm nhiều)"}
+            label={
+              editingItem
+                ? selectedType === "TITLE_KEYWORD"
+                  ? "Từ khoá trong title"
+                  : "Tên App / tiến trình"
+                : selectedType === "TITLE_KEYWORD"
+                ? "Từ khoá trong title (ngăn cách bởi phẩy hoặc xuống dòng để thêm nhiều)"
+                : "Tên App / tiến trình (ngăn cách bởi phẩy hoặc xuống dòng để thêm nhiều)"
+            }
             rules={[
-              { required: true, message: "Vui lòng nhập tên!" },
-              { whitespace: true, message: "Tên không được chỉ chứa khoảng trắng!" },
+              { required: true, message: "Vui lòng nhập giá trị!" },
+              { whitespace: true, message: "Không được chỉ chứa khoảng trắng!" },
             ]}
+            extra={
+              selectedType === "TITLE_KEYWORD"
+                ? "⚠️ Nếu title cửa sổ chứa chuỗi này → log bị flag REVIEW (không phân biệt hoa thường)"
+                : "ℹ️ Khớp chính xác tên tiến trình/app (ví dụ: chrome, zalo)"
+            }
           >
             {editingItem ? (
-              <Input placeholder="ví dụ: facebook.com" />
+              <Input
+                placeholder={
+                  selectedType === "TITLE_KEYWORD"
+                    ? "ví dụ: Thu số điện thoại"
+                    : "ví dụ: chrome"
+                }
+              />
             ) : (
-              <Input.TextArea rows={4} placeholder="ví dụ: facebook.com&#10;zalo.me&#10;chrome" />
+              <Input.TextArea
+                rows={4}
+                placeholder={
+                  selectedType === "TITLE_KEYWORD"
+                    ? "ví dụ: Thu số điện thoại&#10;Facebook&#10;Thoát"
+                    : "ví dụ: chrome&#10;zalo&#10;coccoc"
+                }
+              />
             )}
           </Form.Item>
         </Form>

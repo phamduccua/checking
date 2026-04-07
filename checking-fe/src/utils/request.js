@@ -1,8 +1,8 @@
 import axios from "axios"
 
-const SERVER_URL = "https://ailogs.ptit.edu.vn/be-logs/"
+// const SERVER_URL = "https://ailogs.ptit.edu.vn/be-logs/"
 
-// const SERVER_URL = "http://localhost:9090/"
+const SERVER_URL = "http://localhost:9090/"
 
 const request = axios.create({
   baseURL: SERVER_URL

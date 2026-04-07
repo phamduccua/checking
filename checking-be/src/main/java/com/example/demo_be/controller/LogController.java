@@ -27,16 +27,24 @@ public class LogController {
     }
 
     @GetMapping("admin/stats")
-    public ResponseEntity<?> getStats(@RequestParam String subject) {
-        StatsResponse result = logService.getStats(subject);
+    public ResponseEntity<?> getStats(
+            @RequestParam String subject,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime startTime,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime endTime
+    ) {
+        StatsResponse result = logService.getStats(subject, startTime, endTime);
         return ResponseEntity.ok().body(result);
     }
 
     @GetMapping("admin/flagged")
-    public ResponseEntity<?> getFlaggedLogs(@RequestParam String subject,
-                                            @RequestParam(defaultValue = "30") int limit,
-                                            @RequestParam(defaultValue = "0") int offset) {
-        List<FlaggedDTO> result = logService.getFlagged(subject, limit, offset);
+    public ResponseEntity<?> getFlaggedLogs(
+            @RequestParam String subject,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime startTime,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime endTime,
+            @RequestParam(defaultValue = "30") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) {
+        List<FlaggedDTO> result = logService.getFlagged(subject, startTime, endTime, limit, offset);
         return ResponseEntity.ok().body(result);
     }
 

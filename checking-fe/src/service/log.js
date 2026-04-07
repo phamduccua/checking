@@ -1,16 +1,24 @@
 import request from '../utils/request';
 
-export const getStats = async (subject) => {
-    const response = await request.get(`admin/stats?subject=${subject}`);
+export const getStats = async (subject, startTime = null, endTime = null) => {
+    let url = `admin/stats?subject=${subject}`;
+    if (startTime) url += `&startTime=${encodeURIComponent(startTime)}`;
+    if (endTime) url += `&endTime=${encodeURIComponent(endTime)}`;
+    
+    const response = await request.get(url);
     return response.data;
 }
 
-export const getFlaggedLogs = async (subject, limit=30, offset=0) => {
-    const response = await request.get(`admin/flagged?subject=${subject}&limit=${limit}&offset=${offset}`);
+export const getFlaggedLogs = async (subject, limit=30, offset=0, startTime = null, endTime = null) => {
+    let url = `admin/flagged?subject=${subject}&limit=${limit}&offset=${offset}`;
+    if (startTime) url += `&startTime=${encodeURIComponent(startTime)}`;
+    if (endTime) url += `&endTime=${encodeURIComponent(endTime)}`;
+
+    const response = await request.get(url);
     return response.data;
 }
 
-export const getLogs = async (username, app, title, subject, flag, limit=30, offset=0) => {
+export const getLogs = async (username, app, title, subject, flag, limit=30, offset=0, startTime = null, endTime = null) => {
     let url = `admin/logs?limit=${limit}&offset=${offset}`;
     if (username) {
         url += `&username=${encodeURIComponent(username)}`;
@@ -26,6 +34,12 @@ export const getLogs = async (username, app, title, subject, flag, limit=30, off
     }
     if (flag) {
         url += `&flag=${encodeURIComponent(flag)}`;
+    }
+    if (startTime) {
+        url += `&startTime=${encodeURIComponent(startTime)}`;
+    }
+    if (endTime) {
+        url += `&endTime=${encodeURIComponent(endTime)}`;
     }
     const response = await request.get(url);
     return response.data;

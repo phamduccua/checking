@@ -13,4 +13,5 @@ public class DashboardStatsDto {
     private int totalLogs;
     private int flaggedLogs;
     private int usersNeedReview;
+    private int totalDistinctUsers;
 }

@@ -23,27 +23,44 @@ public class LogRepositoryImpl implements LogCustoms {
     private EntityManager em;
 
     @Override
-    public DashboardStatsDto getStats(String subject) {
-        String sql = "SELECT\n" +
+    public DashboardStatsDto getStats(String subject, java.time.OffsetDateTime startTime, java.time.OffsetDateTime endTime) {
+        StringBuilder sql = new StringBuilder("SELECT\n" +
             "COUNT(*) AS total_logs," +
             "IFNULL(SUM(flag = 'REVIEW'), 0) AS flagged_logs," +
-            "COUNT(DISTINCT CASE WHEN flag = 'REVIEW' THEN username END) AS users_need_review \n"+
-        "FROM logs\n" +
-        "WHERE subject = " + "'" + subject + "'";
-        Query query = em.createNativeQuery(sql);
+            "COUNT(DISTINCT CASE WHEN flag = 'REVIEW' THEN username END) AS users_need_review,\n" +
+            "COUNT(DISTINCT username) AS total_distinct_users\n" +
+            "FROM logs\n" +
+            "WHERE subject = :subject");
+
+        if (startTime != null) {
+            sql.append(" AND log_time >= :startTime");
+        }
+        if (endTime != null) {
+            sql.append(" AND log_time <= :endTime");
+        }
+
+        Query query = em.createNativeQuery(sql.toString());
+        query.setParameter("subject", subject);
+        if (startTime != null) {
+            query.setParameter("startTime", startTime);
+        }
+        if (endTime != null) {
+            query.setParameter("endTime", endTime);
+        }
 
         Object[] r = (Object[]) query.getSingleResult();
 
         return new DashboardStatsDto(
                 ((Number) r[0]).intValue(),
                 ((Number) r[1]).intValue(),
-                ((Number) r[2]).intValue()
+                ((Number) r[2]).intValue(),
+                ((Number) r[3]).intValue()
         );
     }
 
     @Override
-    public List<FlaggedDTO> getFlagged(String subject, int limit, int offset) {
-        String sql =
+    public List<FlaggedDTO> getFlagged(String subject, java.time.OffsetDateTime startTime, java.time.OffsetDateTime endTime, int limit, int offset) {
+        StringBuilder sql = new StringBuilder(
                 "SELECT " +
                         " l.username, " +
                         " u.fullname, " +
@@ -52,12 +69,26 @@ public class LogRepositoryImpl implements LogCustoms {
                         " l.log_time " +
                         "FROM logs l " +
                         "JOIN users u ON l.username = u.username " +
-                        "WHERE l.subject = ?1 " +
-                        "AND l.flag = 'REVIEW' " +
-                        "ORDER BY l.log_time DESC";
+                        "WHERE l.subject = :subject " +
+                        "AND l.flag = 'REVIEW' ");
 
-        Query query = em.createNativeQuery(sql);
-        query.setParameter(1, subject);
+        if (startTime != null) {
+            sql.append(" AND l.log_time >= :startTime ");
+        }
+        if (endTime != null) {
+            sql.append(" AND l.log_time <= :endTime ");
+        }
+
+        sql.append("ORDER BY l.log_time DESC");
+
+        Query query = em.createNativeQuery(sql.toString());
+        query.setParameter("subject", subject);
+        if (startTime != null) {
+            query.setParameter("startTime", startTime);
+        }
+        if (endTime != null) {
+            query.setParameter("endTime", endTime);
+        }
 
         // ✅ PHÂN TRANG
         query.setFirstResult(offset);   // OFFSET
@@ -113,6 +144,12 @@ public class LogRepositoryImpl implements LogCustoms {
         if (logRequest.getFlag() != null && !logRequest.getFlag().isEmpty()) {
             sql.append(" AND l.flag LIKE :flag");
         }
+        if (logRequest.getStartTime() != null) {
+            sql.append(" AND l.log_time >= :startTime");
+        }
+        if (logRequest.getEndTime() != null) {
+            sql.append(" AND l.log_time <= :endTime");
+        }
 
         sql.append(" ORDER BY l.log_time DESC");
         sql.append(" LIMIT :limit OFFSET :offset");
@@ -134,6 +171,12 @@ public class LogRepositoryImpl implements LogCustoms {
         }
         if (logRequest.getFlag() != null && !logRequest.getFlag().isEmpty()) {
             query.setParameter("flag", "%" + logRequest.getFlag() + "%");
+        }
+        if (logRequest.getStartTime() != null) {
+            query.setParameter("startTime", logRequest.getStartTime());
+        }
+        if (logRequest.getEndTime() != null) {
+            query.setParameter("endTime", logRequest.getEndTime());
         }
 
         query.setParameter("limit", logRequest.getLimit());

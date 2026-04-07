@@ -21,13 +21,13 @@ public class WebSercurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/login", "/admin/login", "/api/app-tokens/check-active").permitAll()
-                .requestMatchers("/profile", "/check-login", "/api/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/admin/**").hasRole("ADMIN"))
-            .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/login", "/admin/login", "/api/app-tokens/check-active").permitAll()
+                        .requestMatchers("/profile", "/check-login", "/api/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN"))
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -36,7 +36,8 @@ public class WebSercurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("http://localhost:3000, http://localhost:5173, http://localhost:5001, https://ailogs.ptit.edu.vn"));
+        config.setAllowedOriginPatterns(List
+                .of("http://localhost:3000, http://localhost:5173, http://localhost:5002, https://ailogs.ptit.edu.vn"));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);

@@ -12,8 +12,8 @@ import java.util.List;
 
 public interface LogService {
     void addLog(LogDTO logDTO, HttpServletRequest request);
-    StatsResponse getStats(String subject);
-    List<FlaggedDTO> getFlagged(String subject, int limit, int offset);
+    StatsResponse getStats(String subject, java.time.OffsetDateTime startTime, java.time.OffsetDateTime endTime);
+    List<FlaggedDTO> getFlagged(String subject, java.time.OffsetDateTime startTime, java.time.OffsetDateTime endTime, int limit, int offset);
     List<LogResponse> getLogs(LogRequest logRequest);
     List<Log> getLogsByUser(String username);
     void deleteBySubject(String subject);

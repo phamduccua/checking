@@ -8,6 +8,7 @@ import {
   Space,
   Popconfirm,
   Typography,
+  DatePicker,
 } from "antd";
 import {
   SearchOutlined,
@@ -15,6 +16,9 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import { getLogs, deleteLogsBySubject } from "../service/log";
+import dayjs from "dayjs";
+
+const { RangePicker } = DatePicker;
 
 // Trình duyệt
 const riskyBrowsers = [
@@ -60,6 +64,7 @@ export default function LogsPage() {
     title: "",
     subject: localStorage.getItem("selectedSubject") || "code",
     flag: "",
+    dateRange: null,
   });
 
   const [logs, setLogs] = useState([]);
@@ -72,6 +77,9 @@ export default function LogsPage() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
+      const startTime = filters.dateRange && filters.dateRange[0] ? filters.dateRange[0].toISOString() : null;
+      const endTime = filters.dateRange && filters.dateRange[1] ? filters.dateRange[1].toISOString() : null;
+
       const data = await getLogs(
         filters.username,
         filters.app,
@@ -79,7 +87,9 @@ export default function LogsPage() {
         filters.subject,
         filters.flag,
         limit,
-        offset
+        offset,
+        startTime,
+        endTime
       );
       setLogs(data || []);
     } catch (err) {
@@ -258,6 +268,13 @@ export default function LogsPage() {
               { value: "NORMAL", label: "NORMAL" },
               { value: "REVIEW", label: "REVIEW" },
             ]}
+          />
+
+          <RangePicker
+            value={filters.dateRange}
+            onChange={(dates) => setFilters({ ...filters, dateRange: dates })}
+            showTime
+            format="YYYY-MM-DD HH:mm:ss"
           />
 
           <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>

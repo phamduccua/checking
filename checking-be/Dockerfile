@@ -1,4 +1,4 @@
-FROM maven:3.9.9-eclipse-temurin-21 AS build
+FROM maven:3.9.9-amazoncorretto-21 AS build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY ./src ./src
 
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:21-jdk-alpine
+FROM amazoncorretto:21-alpine
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 9090

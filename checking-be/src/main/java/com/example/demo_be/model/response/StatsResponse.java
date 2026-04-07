@@ -9,4 +9,5 @@ public class StatsResponse {
     private int total_logs;
     private int flagged_logs;
     private int users_need_review;
+    private int total_distinct_users;
 }
